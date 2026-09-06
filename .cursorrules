@@ -1,0 +1,76 @@
+# Règles de développement — python-db-boilerplate
+
+Ces règles sont contraignantes. Tout code produit ou modifié dans ce dépôt
+doit s'y conformer sans exception. En cas de conflit avec une habitude de
+style, ces règles priment.
+
+## 1. Typage statique obligatoire
+
+- Toute fonction, méthode et variable de module est annotée : paramètres ET
+  valeur de retour, y compris `-> None`.
+- `from __future__ import annotations` en tête de chaque module.
+- `Any` est interdit sauf aux frontières réellement dynamiques (résultats de
+  driver, désérialisation) ; l'usage est alors justifié par un commentaire.
+- Pas de `# type: ignore` sans commentaire expliquant la raison.
+- Syntaxe moderne : `str | None`, `list[str]`, `dict[str, int]` — jamais
+  `Optional`, `List`, `Dict`.
+- Les structures de configuration et de transfert sont des `dataclass`
+  (`frozen=True, slots=True` par défaut) ou des `TypedDict`, jamais des
+  dictionnaires nus circulant entre couches.
+- Les ensembles finis de valeurs sont des `Enum`, jamais des chaînes libres.
+
+## 2. Gestion stricte des erreurs et des logs
+
+- `except` nu ou `except Exception` sans re-levée est interdit ; on intercepte
+  le type d'exception précis attendu.
+- Toute exception interceptée est soit traitée, soit re-levée avec `raise ...
+  from exc` pour conserver la chaîne de causalité.
+- Les erreurs applicatives dérivent de `AppError` (`src/exceptions.py`). Le
+  code appelant ne doit jamais avoir à connaître les exceptions des drivers.
+- Les échecs silencieux sont interdits : pas de `pass` dans un `except`, pas de
+  valeur de repli non journalisée.
+- `logging` uniquement, jamais `print`. Un logger par module :
+  `logger = logging.getLogger(__name__)`.
+- Message de log paramétré, jamais formaté à l'avance :
+  `logger.info("%d lignes", n)` et non `logger.info(f"{n} lignes")`.
+- Niveaux : DEBUG (diagnostic), INFO (étapes métier), WARNING (dégradé mais
+  fonctionnel), ERROR (échec d'une opération), CRITICAL (arrêt).
+- Aucun secret dans les logs : ni mot de passe, ni URL de connexion complète,
+  ni jeton, ni donnée personnelle.
+- Toute ressource externe (connexion, fichier, curseur) est acquise via un
+  gestionnaire de contexte.
+
+## 3. Code concis et modulaire
+
+- Une fonction fait une chose. Objectif : moins de 40 lignes, complexité
+  cyclomatique inférieure à 10 (contrôlé par flake8).
+- Un module a une responsabilité unique : configuration, journalisation, accès
+  aux données, métier, présentation — jamais mélangées.
+- Pas de duplication : à la deuxième occurrence, on extrait.
+- Aucune valeur magique : constantes nommées en tête de module (`Final`).
+- Le SQL est paramétré par noms (`:param`). La concaténation de chaînes pour
+  construire une requête est interdite.
+- Aucun secret ni valeur d'environnement en dur : tout passe par
+  `src/settings.py` et les variables d'environnement.
+- Docstrings au format Google sur tout élément public : rôle, `Args`,
+  `Returns`, `Raises`.
+- Imports triés : bibliothèque standard, tierces, locales — sans import
+  relatif remontant (`from src.x import y`).
+- Lignes de 90 caractères maximum.
+
+## 4. Tests
+
+- Toute fonction publique nouvelle est couverte par au moins un test nominal
+  et un test d'erreur.
+- Les tests ne dépendent d'aucune base réelle ni d'aucun réseau : SQLite en
+  mémoire, doublures ou `monkeypatch`.
+- Un test ne dépend jamais de l'ordre d'exécution ni de l'environnement du
+  poste.
+
+## 5. Git
+
+- Messages de commit au format Conventional Commits :
+  `feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`, `ci:`.
+- Aucun fichier `.env`, secret, dump de données ou export volumineux ne doit
+  être committé.
+- Le pipeline (flake8 + pytest) doit être vert avant toute merge request.

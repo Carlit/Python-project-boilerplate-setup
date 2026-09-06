@@ -1,0 +1,17 @@
+# Paramètres non secrets par environnement.
+# Copier en `environments.toml` et adapter. Aucun mot de passe ici.
+
+[local]
+batch_size = 1000
+query_timeout_seconds = 60
+export_dir = "exports/local"
+
+[recette]
+batch_size = 5000
+query_timeout_seconds = 300
+export_dir = "exports/recette"
+
+[production]
+batch_size = 10000
+query_timeout_seconds = 900
+export_dir = "exports/production"
