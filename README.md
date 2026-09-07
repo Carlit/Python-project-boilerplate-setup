@@ -128,7 +128,10 @@ Les tests ne nécessitent **aucune** base : les URL sont validées hors
 connexion, et SQLite en mémoire sert de banc d'essai pour le requêtage.
 
 `mypy` tourne en mode strict (`[tool.mypy]` dans `pyproject.toml`) sur
-`src`, `scripts` et `tests`.
+`src`, `scripts` et `tests`. Sa cible est `python_version = "3.12"` malgré
+un projet en 3.11+ : un stub numpy embarqué ne parse pas sous 3.11 (détail
+et alternatives écartées commentés dans `pyproject.toml`) ; la
+compatibilité 3.11 reste vérifiée par la matrice CI, pas par mypy.
 
 ### pre-commit
 
