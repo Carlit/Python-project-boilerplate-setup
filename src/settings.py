@@ -20,6 +20,31 @@ ENV_FILE: Final[Path] = PROJECT_ROOT / ".env"
 
 _TRUE_VALUES: Final[frozenset[str]] = frozenset({"1", "true", "yes", "on", "oui"})
 
+# Clés lues avec `required=True` par PostgresSettings.from_env() et
+# OracleSettings.from_env(). Source unique pour tout code qui doit connaître
+# la liste des variables obligatoires (ex. scripts/check_config.py) sans la
+# redéfinir à côté.
+REQUIRED_ENV_KEYS: Final[frozenset[str]] = frozenset(
+    {
+        "PG_HOST",
+        "PG_USER",
+        "PG_PASSWORD",
+        "PG_DB_NAME",
+        "ORACLE_HOST",
+        "ORACLE_USER",
+        "ORACLE_PASSWORD",
+    }
+)
+
+# OracleSettings.__post_init__ exige au moins une de ces deux clés (service
+# name prioritaire sur SID) : ni l'une ni l'autre n'est individuellement
+# `required=True`, mais leur absence conjointe lève une ConfigurationError.
+REQUIRED_ANY_OF_ENV_KEYS: Final[tuple[str, ...]] = ("ORACLE_SERVICE_NAME", "ORACLE_SID")
+
+# Clés d'hôte dont la valeur par défaut du modèle (.env.example, "localhost")
+# reste valide pour une base locale mais est suspecte si jamais personnalisée.
+HOST_ENV_KEYS: Final[frozenset[str]] = frozenset({"PG_HOST", "ORACLE_HOST"})
+
 
 def load_env(env_file: Path | None = None, *, override: bool = False) -> None:
     """Charge le fichier `.env` s'il existe.
@@ -200,6 +225,9 @@ class AppSettings:
 __all__ = [
     "PROJECT_ROOT",
     "ENV_FILE",
+    "HOST_ENV_KEYS",
+    "REQUIRED_ANY_OF_ENV_KEYS",
+    "REQUIRED_ENV_KEYS",
     "AppSettings",
     "OracleSettings",
     "PoolSettings",
