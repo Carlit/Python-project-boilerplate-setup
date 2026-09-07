@@ -1,5 +1,5 @@
-# DÃ©pendances applicatives (runtime)
-# Versions Ã©pinglÃ©es par borne mineure : compromis stabilitÃ© / correctifs de sÃ©curitÃ©.
+# Dépendances applicatives (runtime)
+# Versions épinglées par borne mineure : compromis stabilité / correctifs de sécurité.
 
 SQLAlchemy>=2.0.30,<2.1
 pandas>=2.2.0,<3.0
@@ -8,7 +8,7 @@ python-dotenv>=1.0.1,<2.0
 # Driver PostgreSQL (psycopg 3, binaire : pas de compilation requise)
 psycopg[binary]>=3.2.0,<4.0
 
-# Driver Oracle (mode "thin" par dÃ©faut : aucun Instant Client Ã  installer)
+# Driver Oracle (mode "thin" par défaut : aucun Instant Client à installer)
 oracledb>=3.3.0,<5.0
 
 # Export Excel (src/export.py) : requis par pandas pour DataFrame.to_excel()

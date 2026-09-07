@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from src import settings as settings_module
 from src.database import DatabaseType
 from src.logging_config import setup_logging
 from src.main import main, parse_args
@@ -52,5 +53,8 @@ def test_parse_args_rejects_unknown_database() -> None:
 def test_main_returns_failure_without_configuration(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    monkeypatch.chdir(tmp_path)
+    # ENV_FILE est résolu depuis l'emplacement du module (src/settings.py),
+    # pas depuis le répertoire courant : changer le cwd ne l'isole pas. Il
+    # faut rediriger ENV_FILE lui-même pour ignorer le vrai `.env` du dépôt.
+    monkeypatch.setattr(settings_module, "ENV_FILE", tmp_path / ".env")
     assert main(["--check", "postgres"]) == 1
