@@ -1,0 +1,21 @@
+# Hooks locaux : réutilisent l'outillage déjà installé dans le venv du
+# projet (flake8, mypy) plutôt que des environnements isolés gérés par
+# pre-commit — les dépendances compilées (psycopg, oracledb) rendraient ça
+# lent à dupliquer. Nécessite le venv activé (ou sur PATH) au moment du
+# commit : `pip install -r requirements.txt -r requirements-dev.txt`.
+repos:
+  - repo: local
+    hooks:
+      - id: flake8
+        name: flake8 (src, tests, scripts)
+        entry: flake8
+        language: system
+        types: [python]
+        args: [src, tests, scripts]
+        pass_filenames: false
+      - id: mypy
+        name: mypy --strict
+        entry: mypy
+        language: system
+        types: [python]
+        pass_filenames: false

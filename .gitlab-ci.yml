@@ -29,7 +29,15 @@ stages:
 lint:flake8:
   stage: lint
   script:
-    - flake8 src tests
+    - flake8 src tests scripts
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+lint:mypy:
+  stage: lint
+  script:
+    - mypy
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH

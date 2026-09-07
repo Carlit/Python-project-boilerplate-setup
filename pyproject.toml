@@ -19,6 +19,22 @@ pythonpath = ["."]
 addopts = "-q --strict-markers --strict-config"
 filterwarnings = ["error::DeprecationWarning:src.*"]
 
+[tool.mypy]
+# 3.12 et non 3.11 (le minimum du projet) : les stubs numpy embarqués par
+# pandas-stubs utilisent la syntaxe `type X = ...` (PEP 695, 3.12+) ; viser
+# 3.11 fait échouer le parsing de ces stubs tiers, indépendamment du code
+# du dépôt.
+python_version = "3.12"
+files = ["src", "scripts", "tests"]
+strict = true
+warn_unused_configs = true
+show_error_codes = true
+
+[[tool.mypy.overrides]]
+# python-oracledb ne publie pas de stubs PEP 561 sur toutes ses versions.
+module = "oracledb.*"
+ignore_missing_imports = true
+
 [tool.coverage.run]
 source = ["src"]
 branch = true

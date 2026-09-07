@@ -13,7 +13,7 @@ Socle technique Python pour les traitements et extractions sur bases
 | Driver Oracle | `python-oracledb` (mode *thin* par défaut) |
 | Manipulation de données | pandas |
 | Configuration | `python-dotenv` + variables d'environnement |
-| Qualité | flake8 |
+| Qualité | flake8 + mypy (strict) + pre-commit |
 | Tests | pytest + pytest-cov |
 | CI | GitLab CI (`.gitlab-ci.yml`) |
 | IDE | Visual Studio Code (`.vscode/` fourni) |
@@ -37,10 +37,11 @@ python-db-boilerplate/
 ├── .vscode/                   Configuration VS Code partagée
 ├── .env.example               Modèle de configuration (à copier en .env)
 ├── .cursorrules               Règles de développement contraignantes
-├── .gitlab-ci.yml             Pipeline lint + tests
+├── .pre-commit-config.yaml    Hooks locaux : flake8 + mypy avant commit
+├── .gitlab-ci.yml             Pipeline lint (flake8 + mypy) + tests
 ├── requirements.txt           Dépendances runtime
 ├── requirements-dev.txt       Dépendances de développement
-├── pyproject.toml             Métadonnées, pytest, coverage
+├── pyproject.toml             Métadonnées, pytest, coverage, mypy
 └── setup.cfg                  Configuration flake8
 ```
 
@@ -117,13 +118,39 @@ Points notables du `DatabaseManager` :
 ## Qualité et tests
 
 ```bash
-flake8 src tests
+flake8 src tests scripts
+mypy
 pytest
 pytest --cov=src --cov-report=term-missing
 ```
 
 Les tests ne nécessitent **aucune** base : les URL sont validées hors
 connexion, et SQLite en mémoire sert de banc d'essai pour le requêtage.
+
+`mypy` tourne en mode strict (`[tool.mypy]` dans `pyproject.toml`) sur
+`src`, `scripts` et `tests`.
+
+### pre-commit
+
+Un hook local (`.pre-commit-config.yaml`) exécute flake8 puis mypy avant
+chaque commit, en réutilisant l'outillage déjà installé dans le venv du
+projet — pas d'environnement isolé supplémentaire à maintenir.
+
+```bash
+pip install -r requirements.txt -r requirements-dev.txt
+pre-commit install
+```
+
+Le venv doit être **activé** au moment du commit (`flake8`/`mypy` doivent
+être sur le PATH) ; c'est le cas par défaut dans un terminal VS Code
+intégré (`python.terminal.activateEnvironment` est déjà à `true`).
+
+### Tâches VS Code
+
+`Terminal > Exécuter une tâche` (ou `Ctrl+Maj+P` → *Tasks: Run Task*)
+expose « Lint (flake8) », « Typage (mypy) », « Tests (pytest) », et une
+tâche combinée « Qualité (flake8 + mypy + pytest) » qui enchaîne les
+trois dans l'ordre.
 
 ## Sécurité
 
