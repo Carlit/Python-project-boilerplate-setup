@@ -46,6 +46,7 @@ logger: Final[logging.Logger] = logging.getLogger(__name__)
 
 _RETRY_ATTEMPTS: Final[int] = 3
 _RETRY_BASE_DELAY_SECONDS: Final[float] = 1.0
+_DEFAULT_BATCH_SIZE: Final[int] = 50_000
 
 SqlParams = Mapping[str, Any]
 
@@ -498,6 +499,69 @@ class DatabaseManager:
 
         logger.debug("DataFrame %s chargé : %s", db_type.value, frame.shape)
         return frame
+
+    def iter_dataframes(
+        self,
+        db_type: DatabaseType,
+        query: str,
+        params: SqlParams | None = None,
+        *,
+        batch_size: int = _DEFAULT_BATCH_SIZE,
+    ) -> Iterator["pd.DataFrame"]:
+        """Exécute une requête et produit le résultat par lots de DataFrame.
+
+        La validation de `batch_size` est immédiate ; la connexion, elle,
+        n'est ouverte qu'à la première itération et reste active jusqu'à
+        épuisement du générateur (ou fermeture explicite).
+
+        Args:
+            db_type: Moteur cible.
+            query: Requête SQL paramétrée.
+            params: Valeurs des paramètres nommés.
+            batch_size: Nombre de lignes par lot.
+
+        Yields:
+            Un DataFrame par lot, dans l'ordre du résultat.
+
+        Raises:
+            ValueError: Si `batch_size` n'est pas strictement positif.
+            QueryError: Si l'exécution échoue.
+        """
+        if batch_size <= 0:
+            raise ValueError(f"batch_size doit être strictement positif : {batch_size}")
+        return self._iter_dataframes(db_type, query, params, batch_size)
+
+    def _iter_dataframes(
+        self,
+        db_type: DatabaseType,
+        query: str,
+        params: SqlParams | None,
+        batch_size: int,
+    ) -> Iterator["pd.DataFrame"]:
+        """Générateur sous-jacent de :meth:`iter_dataframes`."""
+        import pandas as pd
+
+        try:
+            with self.connect(db_type) as connection:
+                chunks = pd.read_sql_query(
+                    sql=text(query),
+                    con=connection,
+                    params=dict(params or {}),
+                    chunksize=batch_size,
+                )
+                row_count = 0
+                for chunk in chunks:
+                    row_count += len(chunk)
+                    yield chunk
+        except (SQLAlchemyError, ValueError) as exc:
+            logger.error(
+                "Échec du chargement par lots sur %s : %s", db_type.value, exc
+            )
+            raise QueryError(
+                f"Chargement par lots en échec sur {db_type.value} : {exc}"
+            ) from exc
+
+        logger.debug("%d ligne(s) lue(s) par lots sur %s", row_count, db_type.value)
 
     # ------------------------------------------------------------ diagnostics
 

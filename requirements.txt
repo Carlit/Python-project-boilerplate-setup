@@ -10,3 +10,8 @@ psycopg[binary]>=3.2.0,<4.0
 
 # Driver Oracle (mode "thin" par dÃ©faut : aucun Instant Client Ã  installer)
 oracledb>=3.3.0,<5.0
+
+# Export Excel (src/export.py) : requis par pandas pour DataFrame.to_excel()
+openpyxl>=3.1.2,<4.0
+# Le format Parquet (src/export.py) necessite pyarrow, non installe par
+# defaut : a ajouter separement si ce format est utilise.
